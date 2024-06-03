@@ -10,7 +10,7 @@ import (
 	"go.uber.org/fx"
 	"io/fs"
 	"log/slog"
-	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -33,8 +33,8 @@ type CoreConfig interface {
 	// AppConfigLocationValue base config file to load from.
 	// Config file must in json format.
 	// Return empty string to disable loading from config file.
-	// Default implementations read config from ./configs/app.json.
-	AppConfigLocationValue() string
+	// Default implementations read config from file:./configs/app.json.
+	AppConfigLocationValue() (string, error)
 	// AppAutomaticEnvValue enable read env variable into config struct automatically.
 	AppAutomaticEnvValue() bool
 	// ProfileValue application env profile (production,development,debug).
@@ -54,15 +54,20 @@ type CoreEnv struct {
 	AppVersion string `json:"app_version" mapstructure:"app_version"`
 	LogLevel   string `json:"log_level" mapstructure:"log_level"`
 	Profile    string `json:"profile" mapstructure:"profile"`
-	SentryEnv  `json:",squash" mapstructure:",squash"`
+	SentryEnv
 }
 
 func (e CoreEnv) AppAutomaticEnvValue() bool {
 	return true
 }
 
-func (e CoreEnv) AppConfigLocationValue() string {
-	return path.Join(".", ConfigFolder, ConfigFile)
+func (e CoreEnv) AppConfigLocationValue() (string, error) {
+	path := filepath.Join(".", ConfigFolder, ConfigFile)
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	return "file:" + path, nil
 }
 
 func (e CoreEnv) LogLevelValue() string {
@@ -140,6 +145,7 @@ func LoadJSONConfigInto(cfg any, automaticEnv bool, defaultCfgPath string) error
 	if err != nil {
 		return err
 	}
+	viper.SetConfigType("json")
 	if automaticEnv {
 		viper.AutomaticEnv()
 	}
@@ -148,9 +154,10 @@ func LoadJSONConfigInto(cfg any, automaticEnv bool, defaultCfgPath string) error
 	if err := viper.ReadConfig(bytes.NewReader(cfgJSONBytes)); err != nil {
 		return err
 	}
-	if defaultCfgPath != "" {
-		viper.SetConfigType("json")
-		viper.SetConfigFile(defaultCfgPath)
+
+	// Handle config file.
+	if strings.HasPrefix(defaultCfgPath, "file:") {
+		viper.SetConfigFile(defaultCfgPath[5:])
 		// Merge required file into default required, ignore if not exist.
 		if err := viper.MergeInConfig(); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
@@ -169,7 +176,11 @@ type LoadJSONConfigParams struct {
 
 // LoadJSONConfig load config into CoreConfig.
 func LoadJSONConfig(p LoadJSONConfigParams) error {
-	if err := LoadJSONConfigInto(p.Config, p.Config.AppAutomaticEnvValue(), p.Config.AppConfigLocationValue()); err != nil {
+	configLocation, err := p.Config.AppConfigLocationValue()
+	if err != nil {
+		return err
+	}
+	if err := LoadJSONConfigInto(p.Config, p.Config.AppAutomaticEnvValue(), configLocation); err != nil {
 		return err
 	}
 
