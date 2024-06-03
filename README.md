@@ -2,6 +2,12 @@
 
 Integrate core feature like configuration slog and sentry into FX.
 
+## Install
+
+```
+go get -u github.com/mawngo/go-corefx
+```
+
 ## Usage
 
 By default, core fx module will load configuration from `.configs/app.json` then `enviroment variables`
