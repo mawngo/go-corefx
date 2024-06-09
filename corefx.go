@@ -121,9 +121,16 @@ func NewModule() fx.Option {
 	)
 }
 
-// AsConfigFor register a required struct as a required of multiple CoreConfig type, useful if you need single required object to provide multiple required type.
-// This method allow you to inject original object, and all type it registered by this function.
+// AsConfigFor register a required struct as a required of multiple CoreConfig type.
+// See As.
 func AsConfigFor[T any](types ...any) any {
+	return As[T](types...)
+}
+
+// As register already registered type T under multiple interfaces.
+// Useful if you need single required object to provide multiple required type.
+// This method allow you to inject original object, and all type it registered by this function.
+func As[T any](types ...any) any {
 	annotations := make([]fx.Annotation, 0, len(types))
 	for i := range types {
 		annotations = append(annotations, fx.As(types[i]))
@@ -133,6 +140,14 @@ func AsConfigFor[T any](types ...any) any {
 		func(t T) T { return t },
 		annotations...,
 	)
+}
+
+// From create a function that accept and return self.
+// This method can be used with other As... method of multiple fx package when you want to keep both the original type and annotated type
+// after annotated.
+// For example: fx.Provide(newMyService, AsInterface(From[*myService]))
+func From[T any]() any {
+	return func(t T) T { return t }
 }
 
 // LoadJSONConfigInto load json config into cfg pointer.
