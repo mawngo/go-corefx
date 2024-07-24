@@ -31,7 +31,7 @@ type CoreConfig interface {
 	// AppVersionValue application version.
 	AppVersionValue() string
 	// AppConfigLocationValue base config file to load from.
-	// Config file must in json format.
+	// Config file must in JSON format.
 	// Return empty string to disable loading from config file.
 	// Default implementations read config from file:./configs/app.json.
 	AppConfigLocationValue() (string, error)
@@ -39,11 +39,13 @@ type CoreConfig interface {
 	AppAutomaticEnvValue() bool
 	// ProfileValue application env profile (production,development,debug).
 	ProfileValue() string
-	// RequiredValues the list of field that must specified.
-	// This method must return a list of pointer of specified field, on the same object.
+	// RequiredValues the list of field that must specify.
+	// This method must return a list of pointers to specified field on the same object.
 	RequiredValues() []any
 	// LogLevelValue application log level.
 	LogLevelValue() string
+	// LogFormatValue the format of log, accept "text", "json"
+	LogFormatValue() string
 	// IsProd shorthand production profile checking.
 	IsProd() bool
 }
@@ -72,6 +74,10 @@ func (e CoreEnv) AppConfigLocationValue() (string, error) {
 
 func (e CoreEnv) LogLevelValue() string {
 	return e.LogLevel
+}
+
+func (e CoreEnv) LogFormatValue() string {
+	return ""
 }
 
 func (e CoreEnv) AppNameValue() string {
@@ -121,15 +127,16 @@ func NewModule() fx.Option {
 	)
 }
 
-// AsConfigFor register a required struct as a required of multiple CoreConfig type.
+// AsConfigFor register a required struct as implement of multiple CoreConfig types.
 // See As.
+// Deprecated: use As instead.
 func AsConfigFor[T any](types ...any) any {
 	return As[T](types...)
 }
 
 // As register already registered type T under multiple interfaces.
-// Useful if you need single required object to provide multiple required type.
-// This method allow you to inject original object, and all type it registered by this function.
+// Useful if you need a single required object to provide multiple required types.
+// This method allows you to inject the original object, and all type it registered by this function.
 func As[T any](types ...any) any {
 	annotations := make([]fx.Annotation, 0, len(types))
 	for i := range types {
@@ -142,10 +149,10 @@ func As[T any](types ...any) any {
 	)
 }
 
-// From create a function that accept and return self.
-// This method can be used with other As... method of multiple fx package when you want to keep both the original type and annotated type
+// From create a function that accepts and return self.
+// This method can be used with other As... methods of multiple fx packages when you want to keep both the original type and annotated type
 // after annotated.
-// For example: fx.Provide(newMyService, AsInterface(From[*myService]))
+// For example, fx.Provide(newMyService, AsInterface(From[*myService])).
 func From[T any]() any {
 	return func(t T) T { return t }
 }

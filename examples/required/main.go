@@ -19,7 +19,7 @@ func main() {
 var requiredConfigModule = fx.Module("required",
 	fx.Provide(
 		newRequiredConfig,
-		corefx.AsConfigFor[*myRequiredConfig](
+		corefx.As[*myRequiredConfig](
 			new(corefx.CoreConfig),
 			new(corefx.SentryConfig), // optional, enable sentry configuration.
 		),

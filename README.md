@@ -38,7 +38,7 @@ func main() {
 var configModule = fx.Module("config",
 	fx.Provide(
 		newConfig,
-		corefx.AsConfigFor[*myConfig](
+		corefx.As[*myConfig](
 			new(corefx.CoreConfig),
 			new(corefx.SentryConfig), // Optional.
 		),

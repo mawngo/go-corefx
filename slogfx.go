@@ -16,7 +16,7 @@ import (
 
 // nolint:gochecknoinits
 // Set default level to Warn to avoid pre-setup logging.
-// Client can always re-setting this value in main().
+// Client can always set this value in main().
 func init() {
 	slog.SetLogLoggerLevel(slog.LevelWarn)
 }
@@ -34,8 +34,13 @@ func newSlogLogger(p SlogLoggerParams) (*slog.Logger, error) {
 	if p.Config.ProfileValue() == ProfileDebug {
 		level = slog.LevelDebug
 	}
+
+	logFormat := p.Config.LogFormatValue()
+	if logFormat == "" && p.Config.ProfileValue() == ProfileProduction {
+		logFormat = "json"
+	}
 	var handler slog.Handler
-	if p.Config.ProfileValue() == ProfileProduction {
+	if logFormat == "json" {
 		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})
 	} else {
 		handler = console.NewHandler(os.Stderr, &console.HandlerOptions{Level: level})
