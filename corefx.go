@@ -32,7 +32,7 @@ type CoreConfig interface {
 	AppVersionValue() string
 	// AppConfigLocationValue base config file to load from.
 	// Config file must in JSON format.
-	// Return empty string to disable loading from config file.
+	// Return empty string to disable loading from a config file.
 	// Default implementations read config from file:./configs/app.json.
 	AppConfigLocationValue() (string, error)
 	// AppAutomaticEnvValue enable read env variable into config struct automatically.
@@ -127,13 +127,6 @@ func NewModule() fx.Option {
 	)
 }
 
-// AsConfigFor register a required struct as implement of multiple CoreConfig types.
-// See As.
-// Deprecated: use As instead.
-func AsConfigFor[T any](types ...any) any {
-	return As[T](types...)
-}
-
 // As register already registered type T under multiple interfaces.
 // Useful if you need a single required object to provide multiple required types.
 // This method allows you to inject the original object, and all type it registered by this function.
@@ -160,7 +153,7 @@ func From[T any]() any {
 // LoadJSONConfigInto load json config into cfg pointer.
 func LoadJSONConfigInto(cfg any, automaticEnv bool, defaultCfgPath string) error {
 	if reflect.ValueOf(cfg).Type().Kind() != reflect.Pointer {
-		return errors.New("LoadConfigInto require a pointer to config struct")
+		return errors.New("error LoadConfigInto require a pointer to config struct")
 	}
 
 	cfgJSONBytes, err := json.Marshal(cfg)
@@ -177,7 +170,7 @@ func LoadJSONConfigInto(cfg any, automaticEnv bool, defaultCfgPath string) error
 		return err
 	}
 
-	// Handle config file.
+	// Handle the config file.
 	if strings.HasPrefix(defaultCfgPath, "file:") {
 		viper.SetConfigFile(defaultCfgPath[5:])
 		// Merge required file into default required, ignore if not exist.
@@ -218,7 +211,7 @@ func checkRequired(s any, vals ...any) error {
 	for i := range vals {
 		ptr := vals[i]
 		if reflect.ValueOf(ptr).Type().Kind() != reflect.Pointer {
-			return errors.New("requiredValues must return array of pointer")
+			return errors.New("error requiredValues must return array of pointer")
 		}
 		f := reflect.ValueOf(ptr).Elem()
 
