@@ -162,6 +162,7 @@ func LoadJSONConfigInto(cfg any, automaticEnv bool, defaultCfgPath string) error
 	}
 	viper.SetConfigType("json")
 	if automaticEnv {
+		viper.SetEnvKeyReplacer(strings.NewReplacer(`.`, `__`))
 		viper.AutomaticEnv()
 	}
 
