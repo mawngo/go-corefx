@@ -150,6 +150,11 @@ func From[T any]() any {
 	return func(t T) T { return t }
 }
 
+// Named indicate that this service has a name (which may not unique between services).
+type Named interface {
+	Name() string
+}
+
 // LoadJSONConfigInto load json config into cfg pointer.
 func LoadJSONConfigInto(cfg any, automaticEnv bool, defaultCfgPath string) error {
 	if reflect.ValueOf(cfg).Type().Kind() != reflect.Pointer {
