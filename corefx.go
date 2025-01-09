@@ -108,10 +108,19 @@ func NewEnv() CoreEnv {
 
 var _ CoreConfig = (*CoreEnv)(nil)
 
-// NewModule Create a module that autoconfigure slog, sentry and populate configuration from file or environment.
+// NewModule register core module and enable health check support.
+func NewModule() fx.Option {
+	return fx.Options(
+		NewCoreModule(),
+		fx.Provide(NewHealth),
+	)
+}
+
+// NewCoreModule Create a module that autoconfigure slog, sentry
+// and populate configuration from file or environment.
 // The env config object must implement CoreConfig, and registered using AsConfigFor to be autopopulated.
 // The env config must also register as SentryConfig to enable sentry feature.
-func NewModule() fx.Option {
+func NewCoreModule() fx.Option {
 	return fx.Options(
 		UseSlogLogger(),
 		fx.Module("corefx",
