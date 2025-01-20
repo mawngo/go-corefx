@@ -1,6 +1,7 @@
 package corefx
 
 import (
+	"context"
 	"errors"
 	"go.uber.org/fx"
 	"sync/atomic"
@@ -18,8 +19,8 @@ const (
 
 // HealthIndicator an empty interface for registering type for health probing.
 type HealthIndicator interface {
-	Readiness() error
-	Liveness() error
+	Readiness(ctx context.Context) error
+	Liveness(ctx context.Context) error
 }
 
 // ReadinessThresholder configure maximum number of continuously not-ready probes before this instance considered failure.
@@ -70,11 +71,11 @@ func NewHealth(p AvailabilityProbeParams) *Health {
 	return &probe
 }
 
-func (p *Health) Liveness() (bool, map[HealthIndicator]HealthStatus) {
+func (p *Health) Liveness(ctx context.Context) (bool, map[HealthIndicator]HealthStatus) {
 	liveness := true
 	res := make(map[HealthIndicator]HealthStatus, len(p.checkers))
 	for _, l := range p.checkers {
-		err := l.Liveness()
+		err := l.Liveness(ctx)
 		if err != nil {
 			liveness = false
 			res[l] = HealthStatus{
@@ -104,11 +105,11 @@ func (p *Health) Liveness() (bool, map[HealthIndicator]HealthStatus) {
 	return liveness, res
 }
 
-func (p *Health) Readiness() (bool, map[HealthIndicator]HealthStatus) {
+func (p *Health) Readiness(ctx context.Context) (bool, map[HealthIndicator]HealthStatus) {
 	readiness := true
 	res := make(map[HealthIndicator]HealthStatus, len(p.checkers))
 	for _, r := range p.checkers {
-		err := r.Readiness()
+		err := r.Readiness(ctx)
 		if err == nil {
 			res[r] = HealthStatus{
 				Status: HealthStatusUp,
