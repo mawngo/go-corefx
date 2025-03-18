@@ -2,6 +2,8 @@
 
 Integrate core feature like configuration slog and sentry into FX.
 
+Requires go 1.24+
+
 ## Install
 
 ```
